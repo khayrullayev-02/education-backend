@@ -1,0 +1,128 @@
+from django.contrib import admin
+from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
+from rest_framework.routers import DefaultRouter
+from rest_framework_simplejwt.views import TokenRefreshView
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
+
+from auth_system.views import (
+    LoginView, RegisterView, UserProfileView, ChangePasswordView,
+    OrganizationViewSet, UserViewSet
+)
+from finance.views import (
+    FinanceReportViewSet, StudentPaymentViewSet, TeacherPaymentViewSet,
+    StaffPaymentViewSet, WalletViewSet, PaymentDiscountViewSet, IncomeLeadViewSet
+)
+from admin_dashboard.views import (
+    StudentManagementViewSet, DocumentApprovalViewSet, AttendanceManagementViewSet,
+    LessonMaterialViewSet, ExamAnswerViewSet, AttendanceCorrectionViewSet
+)
+from teacher_dashboard.views import (
+    TeacherDashboardViewSet, HomeworkViewSet, HomeworkSubmissionViewSet,
+    TeacherPortfolioViewSet
+)
+from manager_dashboard.views import ManagerDashboardViewSet, PerformanceMetricsViewSet
+from director_dashboard.views import DirectorDashboardViewSet
+from attendance.views import AttendanceSubmissionViewSet, AttendanceViewSet
+from exams.views import ExamViewSet, ExamResultViewSet, ExamUploadViewSet
+
+# ❌ statistics.views ni o'zgartirdik
+from statistics_app.views import StatisticsViewSet  
+
+router = DefaultRouter()
+
+# Auth
+router.register(r'organizations', OrganizationViewSet, basename='organization')
+router.register(r'users', UserViewSet, basename='user')
+
+# Finance
+router.register(r'finance/reports', FinanceReportViewSet, basename='finance-report')
+router.register(r'finance/student-payments', StudentPaymentViewSet, basename='student-payment')
+router.register(r'finance/teacher-payments', TeacherPaymentViewSet, basename='teacher-payment')
+router.register(r'finance/staff-payments', StaffPaymentViewSet, basename='staff-payment')
+router.register(r'finance/wallets', WalletViewSet, basename='wallet')
+router.register(r'finance/discounts', PaymentDiscountViewSet, basename='discount')
+router.register(r'finance/leads', IncomeLeadViewSet, basename='lead')
+
+# Admin Dashboard
+router.register(r'admin/students', StudentManagementViewSet, basename='student')
+router.register(r'admin/documents', DocumentApprovalViewSet, basename='document')
+router.register(r'admin/attendance', AttendanceManagementViewSet, basename='admin-attendance')
+router.register(r'admin/materials', LessonMaterialViewSet, basename='material')
+router.register(r'admin/exam-answers', ExamAnswerViewSet, basename='exam-answer')
+router.register(r'admin/corrections', AttendanceCorrectionViewSet, basename='correction')
+
+# Teacher Dashboard
+router.register(r'teacher/homework', HomeworkViewSet, basename='homework')
+router.register(r'teacher/submissions', HomeworkSubmissionViewSet, basename='submission')
+router.register(r'teacher/portfolio', TeacherPortfolioViewSet, basename='portfolio')
+
+# Manager Dashboard
+router.register(r'manager/metrics', PerformanceMetricsViewSet, basename='metric')
+
+# Attendance
+router.register(r'attendance/submit', AttendanceSubmissionViewSet, basename='attendance-submit')
+router.register(r'attendance/records', AttendanceViewSet, basename='attendance-record')
+
+# Exams
+router.register(r'exams', ExamViewSet, basename='exam')
+router.register(r'exams/results', ExamResultViewSet, basename='exam-result')
+router.register(r'exams/uploads', ExamUploadViewSet, basename='exam-upload')
+
+# Statistics
+router.register(r'statistics', StatisticsViewSet, basename='statistics')
+
+schema_view = get_schema_view(
+    openapi.Info(
+        title="Education Management System API",
+        default_version='v1',
+        description="""
+        Complete Education Management System with Django REST Framework.
+        
+        Features:
+        - Role-based access control (6 roles)
+        - Student, Teacher, Admin, Manager, Director, Superadmin dashboards
+        - Finance management with wallet system
+        - Attendance tracking and reporting
+        - Exam management with grading
+        - Comprehensive statistics and analytics
+        - Homework and portfolio management
+        
+        Authentication: JWT Token (SimpleJWT)
+        """,
+        contact=openapi.Contact(email="api@education.uz"),
+        license=openapi.License(name="MIT License"),
+    ),
+    public=True,
+    permission_classes=[],
+)
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    
+    # API
+    path('api/', include(router.urls)),
+    path('api/auth/login/', LoginView.as_view(), name='login'),
+    path('api/auth/register/', RegisterView.as_view(), name='register'),
+    path('api/auth/profile/', UserProfileView.as_view(), name='profile'),
+    path('api/auth/change-password/', ChangePasswordView.as_view(), name='change-password'),
+    path('api/auth/token/refresh/', TokenRefreshView.as_view(), name='token-refresh'),
+    
+    # Dashboards
+    path('api/admin/dashboard/', include('admin_dashboard.urls')),
+    path('api/director/dashboard/', DirectorDashboardViewSet.as_view({'get': 'list'}), name='director-dashboard'),
+    path('api/manager/dashboard/', ManagerDashboardViewSet.as_view({'get': 'list'}), name='manager-dashboard'),
+    path('api/teacher/dashboard/', TeacherDashboardViewSet.as_view({'get': 'overview'}), name='teacher-dashboard'),
+    
+    # Swagger & ReDoc
+    path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+    path('swagger.json', schema_view.without_ui(cache_timeout=0), name='schema-json'),
+    path('swagger.yaml', schema_view.without_ui(cache_timeout=0), name='schema-yaml'),
+    
+    # DRF Auth
+    path('api-auth/', include('rest_framework.urls')),
+    
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
