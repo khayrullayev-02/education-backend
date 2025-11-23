@@ -1,12 +1,13 @@
+# statistics_app/views.py
 from rest_framework import viewsets, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import Count, Sum, Avg, Q
+from django.db.models import Count, Sum, Avg
 from datetime import datetime, timedelta
-from core.models import Student, Teacher, Group, Attendance, Branch
+from core.models import Student, Teacher, Group, Attendance
 from exams.models import ExamResult
-from finance.models import StudentPayment, FinanceReport
+from finance.models import FinanceReport
 from auth_system.permissions import IsDirector, IsManager
 
 class StatisticsViewSet(viewsets.ViewSet):
@@ -18,7 +19,7 @@ class StatisticsViewSet(viewsets.ViewSet):
         
         if user.role == 'superadmin':
             students = Student.objects.all()
-        elif user.organization:
+        elif getattr(user, 'organization', None):
             students = Student.objects.filter(branch__organization=user.organization)
         else:
             students = Student.objects.filter(branch=user.branch) if user.branch else Student.objects.none()
@@ -40,7 +41,7 @@ class StatisticsViewSet(viewsets.ViewSet):
         
         if user.role == 'superadmin':
             teachers = Teacher.objects.all()
-        elif user.organization:
+        elif getattr(user, 'organization', None):
             teachers = Teacher.objects.filter(branch__organization=user.organization)
         else:
             teachers = Teacher.objects.filter(branch=user.branch) if user.branch else Teacher.objects.none()
@@ -84,8 +85,7 @@ class StatisticsViewSet(viewsets.ViewSet):
     
     @action(detail=False, methods=['get'])
     def financial_statistics(self, request):
-        user = request.user
-        branch = user.branch if user.branch else None
+        branch = request.user.branch
         period_days = int(request.query_params.get('days', 30))
         start_date = datetime.today().date() - timedelta(days=period_days)
         
@@ -111,7 +111,7 @@ class StatisticsViewSet(viewsets.ViewSet):
         
         if user.role == 'superadmin':
             results = ExamResult.objects.all()
-        elif user.organization:
+        elif getattr(user, 'organization', None):
             results = ExamResult.objects.filter(exam__group__branch__organization=user.organization)
         else:
             results = ExamResult.objects.filter(exam__group__branch=user.branch) if user.branch else ExamResult.objects.none()
@@ -121,7 +121,7 @@ class StatisticsViewSet(viewsets.ViewSet):
             'total_results': results.count(),
             'average_score': round(results.aggregate(Avg('score'))['score__avg'] or 0, 2),
             'grade_distribution': results.values('grade').annotate(count=Count('id')),
-            'highest_score': results.aggregate(max_score=models.Max('score'))['max_score'] or 0,
+            'highest_score': results.aggregate(max_score=Max('score'))['max_score'] or 0,
         }
         
         return Response(stats)
@@ -132,7 +132,7 @@ class StatisticsViewSet(viewsets.ViewSet):
         
         if user.role == 'superadmin':
             groups = Group.objects.all()
-        elif user.organization:
+        elif getattr(user, 'organization', None):
             groups = Group.objects.filter(branch__organization=user.organization)
         else:
             groups = Group.objects.filter(branch=user.branch) if user.branch else Group.objects.none()

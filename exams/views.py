@@ -1,8 +1,9 @@
+# exams/views.py
 from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import Count, Q, Case, When, F
+from django.db.models import Count, Q, Case, When, F, Avg, Max, Min
 from datetime import datetime
 from .models import Exam, ExamResult, ExamUpload, ExamGradeRange
 from .serializers import (
@@ -39,7 +40,7 @@ class ExamViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
     
-    @action(detail=['get'], methods=['get'])
+    @action(detail=True, methods=['get'])
     def detailed(self, request, pk=None):
         exam = self.get_object()
         serializer = ExamDetailedSerializer(exam)
@@ -124,9 +125,9 @@ class ExamResultViewSet(viewsets.ModelViewSet):
         
         stats = {
             'total_students': results.count(),
-            'average_score': results.values('score').aggregate(avg=models.Avg('score'))['avg'] or 0,
-            'highest_score': results.values('score').aggregate(max=models.Max('score'))['max'] or 0,
-            'lowest_score': results.values('score').aggregate(min=models.Min('score'))['min'] or 0,
+            'average_score': results.aggregate(avg=Avg('score'))['avg'] or 0,
+            'highest_score': results.aggregate(max=Max('score'))['max'] or 0,
+            'lowest_score': results.aggregate(min=Min('score'))['min'] or 0,
             'passed': results.filter(score__gte=F('exam__pass_score')).count(),
             'failed': results.filter(score__lt=F('exam__pass_score')).count(),
         }
