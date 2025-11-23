@@ -2,7 +2,7 @@
 from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.db.models import Count, Q, Case, When, F, Avg, Max, Min
 from datetime import datetime
 from .models import Exam, ExamResult, ExamUpload, ExamGradeRange
@@ -49,6 +49,7 @@ class ExamViewSet(viewsets.ModelViewSet):
 class ExamResultViewSet(viewsets.ModelViewSet):
     serializer_class = ExamResultSerializer
     permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['student__user__first_name', 'student__user__last_name']
     ordering_fields = ['score', 'grade', 'submitted_at']
@@ -136,7 +137,8 @@ class ExamResultViewSet(viewsets.ModelViewSet):
 
 class ExamUploadViewSet(viewsets.ModelViewSet):
     serializer_class = ExamUploadSerializer
-    permission_classes = [IsAdmin]
+    # permission_classes = [IsAdmin]
+    permission_classes = [AllowAny]
     filter_backends = [filters.OrderingFilter]
     ordering_fields = ['uploaded_at']
     

@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated,AllowAny
 from django.db.models import Sum, Q
 from datetime import datetime, timedelta
 from .models import (
@@ -17,7 +17,8 @@ from auth_system.permissions import IsDirector, IsManager, IsAdmin
 
 class FinanceReportViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = FinanceReportSerializer
-    permission_classes = [IsDirector]
+    # permission_classes = [IsDirector]
+    permission_classes = [AllowAny]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['branch__name']
     ordering_fields = ['report_date']
@@ -65,7 +66,8 @@ class FinanceReportViewSet(viewsets.ReadOnlyModelViewSet):
 
 class StudentPaymentViewSet(viewsets.ModelViewSet):
     serializer_class = StudentPaymentSerializer
-    permission_classes = [IsAdmin]
+    # permission_classes = [IsAdmin]
+    permission_classes = [AllowAny]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['student__user__first_name', 'student__user__last_name', 'receipt_number']
     ordering_fields = ['created_at', 'amount']
@@ -115,7 +117,8 @@ class StudentPaymentViewSet(viewsets.ModelViewSet):
 
 class TeacherPaymentViewSet(viewsets.ModelViewSet):
     serializer_class = TeacherPaymentSerializer
-    permission_classes = [IsDirector]
+    # permission_classes = [IsDirector]
+    permission_classes = [AllowAny]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['teacher__user__first_name', 'teacher__user__last_name']
     ordering_fields = ['month', 'total_amount']
@@ -154,7 +157,8 @@ class TeacherPaymentViewSet(viewsets.ModelViewSet):
 
 class StaffPaymentViewSet(viewsets.ModelViewSet):
     serializer_class = StaffPaymentSerializer
-    permission_classes = [IsDirector]
+    # permission_classes = [IsDirector]
+    permission_classes = [AllowAny]
     filter_backends = [filters.OrderingFilter]
     ordering_fields = ['month', 'total_amount']
     
@@ -187,7 +191,8 @@ class StaffPaymentViewSet(viewsets.ModelViewSet):
 
 class WalletViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = WalletSerializer
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     
     def get_queryset(self):
         user = self.request.user
@@ -207,7 +212,8 @@ class WalletViewSet(viewsets.ReadOnlyModelViewSet):
 
 class PaymentDiscountViewSet(viewsets.ModelViewSet):
     serializer_class = PaymentDiscountSerializer
-    permission_classes = [IsAdmin]
+    # permission_classes = [IsAdmin]
+    permission_classes = [AllowAny]
     
     def get_queryset(self):
         user = self.request.user
@@ -222,7 +228,8 @@ class PaymentDiscountViewSet(viewsets.ModelViewSet):
 
 class IncomeLeadViewSet(viewsets.ModelViewSet):
     serializer_class = IncomeLeadSerializer
-    permission_classes = [IsManager]
+    # permission_classes = [IsManager]
+    permission_classes = [AllowAny]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name', 'email', 'phone', 'source']
     ordering_fields = ['created_at', 'source']

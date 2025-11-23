@@ -30,6 +30,7 @@ class Organization(models.Model):
     tariff = models.CharField(max_length=50, choices=TARIFF_CHOICES, default='basic')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True) 
 
     def __str__(self):
         return self.name
@@ -77,20 +78,23 @@ class CustomUser(AbstractUser):
     two_factor_enabled = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    # Groups va permissions clashini oldini olish
     groups = models.ManyToManyField(
         Group,
-        related_name='customuser_set',
+        related_name='custom_users',
         blank=True
     )
     user_permissions = models.ManyToManyField(
         Permission,
-        related_name='customuser_set',
+        related_name='custom_users',
         blank=True
     )
 
     def __str__(self):
         return f"{self.get_full_name()} ({self.role})"
+
+    @property
+    def full_name(self):
+        return f"{self.first_name} {self.last_name}".strip()
 
     class Meta:
         permissions = [
@@ -100,6 +104,7 @@ class CustomUser(AbstractUser):
 
 # Aliasing uchun
 User = CustomUser
+
 
 # ========================
 # Student va Teacher
@@ -123,7 +128,7 @@ class Student(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.user.get_full_name()} (Student)"
+        return f"{self.user.full_name} (Student)"
 
 
 class Teacher(models.Model):
@@ -138,7 +143,8 @@ class Teacher(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.user.get_full_name()} (Teacher)"
+        return f"{self.user.full_name} (Teacher)"
+
 
 # ========================
 # Group va Lesson
@@ -208,7 +214,7 @@ class Attendance(models.Model):
     submitted_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.student.user.get_full_name()} - {self.status}"
+        return f"{self.student.user.full_name} - {self.status}"
 
 
 class Payment(models.Model):
@@ -236,7 +242,7 @@ class Payment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.student.user.get_full_name()} - {self.amount}"
+        return f"{self.student.user.full_name} - {self.amount}"
 
 
 # ========================
@@ -251,7 +257,7 @@ class Wallet(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"Wallet - {self.teacher.user.get_full_name()}"
+        return f"Wallet - {self.teacher.user.full_name}"
 
 
 # ========================
@@ -274,7 +280,7 @@ class Notification(models.Model):
     sent_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.title} - {self.user.get_full_name()}"
+        return f"{self.title} - {self.user.full_name}"
 
 
 class SystemLog(models.Model):

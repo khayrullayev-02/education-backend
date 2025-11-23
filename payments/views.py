@@ -2,7 +2,7 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from datetime import datetime
 from .models import PaymentMethod, Transaction, PaymentInitiation
 from .serializers import PaymentMethodSerializer, TransactionSerializer, PaymentInitiationSerializer
@@ -10,7 +10,8 @@ from .serializers import PaymentMethodSerializer, TransactionSerializer, Payment
 
 class PaymentMethodViewSet(viewsets.ModelViewSet):
     serializer_class = PaymentMethodSerializer
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get_queryset(self):
         return PaymentMethod.objects.filter(student__user=self.request.user)
@@ -18,7 +19,9 @@ class PaymentMethodViewSet(viewsets.ModelViewSet):
 
 class TransactionViewSet(viewsets.ModelViewSet):
     serializer_class = TransactionSerializer
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
+
 
     def get_queryset(self):
         return Transaction.objects.filter(student__user=self.request.user)
@@ -46,7 +49,8 @@ class TransactionViewSet(viewsets.ModelViewSet):
 
 class PaymentInitiateViewSet(viewsets.ModelViewSet):
     serializer_class = PaymentInitiationSerializer
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get_queryset(self):
         return PaymentInitiation.objects.filter(student__user=self.request.user)

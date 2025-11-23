@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status, filters, serializers
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated,AllowAny
 from django.db.models import Q, Count
 from datetime import datetime, timedelta
 from .models import DocumentApproval, LessonMaterial, ExamAnswer, AttendanceCorrection
@@ -21,7 +21,8 @@ class AttendanceSerializer(serializers.ModelSerializer):
 
 class StudentManagementViewSet(viewsets.ModelViewSet):
     serializer_class = StudentDetailSerializer
-    permission_classes = [IsAdmin]
+    # permission_classes = [IsAdmin]
+    permission_classes = [AllowAny]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['user__first_name', 'user__last_name', 'user__email']
     ordering_fields = ['enrollment_date', 'total_debt']
@@ -59,7 +60,8 @@ class StudentManagementViewSet(viewsets.ModelViewSet):
 
 class DocumentApprovalViewSet(viewsets.ModelViewSet):
     serializer_class = DocumentApprovalSerializer
-    permission_classes = [IsAdmin]
+    # permission_classes = [IsAdmin]
+    permission_classes = [AllowAny]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['student__user__first_name', 'student__user__last_name']
     ordering_fields = ['uploaded_at', 'status']
@@ -100,7 +102,8 @@ class DocumentApprovalViewSet(viewsets.ModelViewSet):
 
 class AttendanceManagementViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = AttendanceSerializer
-    permission_classes = [IsAdmin]
+    # permission_classes = [IsAdmin]
+    permission_classes = [AllowAny]
 
     def get_queryset(self):
         user = self.request.user
@@ -168,7 +171,9 @@ class AttendanceManagementViewSet(viewsets.ReadOnlyModelViewSet):
 
 class LessonMaterialViewSet(viewsets.ModelViewSet):
     serializer_class = LessonMaterialSerializer
-    permission_classes = [IsAdmin]
+    # permission_classes = [IsAdmin]
+    permission_classes = [AllowAny]
+
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['title', 'lesson__group__name']
     ordering_fields = ['uploaded_at', 'file_type']
@@ -189,7 +194,9 @@ class LessonMaterialViewSet(viewsets.ModelViewSet):
 
 class ExamAnswerViewSet(viewsets.ModelViewSet):
     serializer_class = ExamAnswerSerializer
-    permission_classes = [IsAdmin]
+    # permission_classes = [IsAdmin]
+    permission_classes = [AllowAny]
+
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['exam__title', 'exam__group__name']
     ordering_fields = ['uploaded_at']
@@ -210,7 +217,9 @@ class ExamAnswerViewSet(viewsets.ModelViewSet):
 
 class AttendanceCorrectionViewSet(viewsets.ModelViewSet):
     serializer_class = AttendanceCorrectionSerializer
-    permission_classes = [IsAdmin]
+    # permission_classes = [IsAdmin]
+    permission_classes = [AllowAny]
+
     filter_backends = [filters.OrderingFilter]
     ordering_fields = ['corrected_at']
 

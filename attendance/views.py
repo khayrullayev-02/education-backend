@@ -2,7 +2,7 @@
 from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.db.models import Count, Q
 from datetime import datetime, timedelta
 from core.models import Attendance, Lesson, Group, Student, Teacher
@@ -10,7 +10,8 @@ from .serializers import AttendanceSheetSerializer, BulkAttendanceSerializer, At
 from auth_system.permissions import IsTeacher, IsAdmin
 
 class AttendanceSubmissionViewSet(viewsets.ViewSet):
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     
     @action(detail=False, methods=['post'])
     def submit_attendance(self, request):
@@ -73,7 +74,8 @@ class AttendanceSubmissionViewSet(viewsets.ViewSet):
 
 class AttendanceViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = AttendanceDetailSerializer
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['student__user__first_name', 'student__user__last_name']
     ordering_fields = ['submitted_at', 'status']

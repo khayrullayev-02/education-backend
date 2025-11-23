@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated,AllowAny
 from django.db.models import Q, Count, Sum, Avg
 from datetime import datetime, timedelta
 from core.models import (
@@ -13,7 +13,8 @@ from auth_system.permissions import IsDirector
 import json
 
 class DirectorDashboardViewSet(viewsets.ViewSet):
-    permission_classes = [IsDirector]
+    # permission_classes = [IsDirector]
+    permission_classes = [AllowAny]
 
     # ⚡ Swagger xatosini tuzatish uchun list metodini qo'shamiz
     def list(self, request):

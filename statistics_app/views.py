@@ -2,7 +2,7 @@
 from rest_framework import viewsets, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.db.models import Count, Sum, Avg
 from datetime import datetime, timedelta
 from core.models import Student, Teacher, Group, Attendance
@@ -11,7 +11,8 @@ from finance.models import FinanceReport
 from auth_system.permissions import IsDirector, IsManager
 
 class StatisticsViewSet(viewsets.ViewSet):
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     
     @action(detail=False, methods=['get'])
     def student_statistics(self, request):
