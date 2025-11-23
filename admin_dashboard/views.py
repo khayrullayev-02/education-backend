@@ -2,7 +2,7 @@ from rest_framework import viewsets, status, filters, serializers
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import Q, Count, Sum
+from django.db.models import Q, Count
 from datetime import datetime, timedelta
 from .models import DocumentApproval, LessonMaterial, ExamAnswer, AttendanceCorrection
 from .serializers import (
@@ -18,6 +18,7 @@ class AttendanceSerializer(serializers.ModelSerializer):
         model = Attendance
         fields = '__all__'
 
+
 class StudentManagementViewSet(viewsets.ModelViewSet):
     serializer_class = StudentDetailSerializer
     permission_classes = [IsAdmin]
@@ -27,9 +28,11 @@ class StudentManagementViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.role == 'superadmin':
+        if not user.is_authenticated:
+            return Student.objects.none()
+        if getattr(user, 'role', None) == 'superadmin':
             return Student.objects.all()
-        if user.branch:
+        if getattr(user, 'branch', None):
             return Student.objects.filter(branch=user.branch)
         return Student.objects.none()
 
@@ -39,14 +42,14 @@ class StudentManagementViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(students, many=True)
         return Response(serializer.data)
 
-    @action(detail=['post'], methods=['post'])
+    @action(detail=True, methods=['post'])
     def block_student(self, request, pk=None):
         student = self.get_object()
         student.user.is_blocked = True
         student.user.save()
         return Response({'status': 'Student blocked'})
 
-    @action(detail=['post'], methods=['post'])
+    @action(detail=True, methods=['post'])
     def unblock_student(self, request, pk=None):
         student = self.get_object()
         student.user.is_blocked = False
@@ -63,9 +66,11 @@ class DocumentApprovalViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.role == 'superadmin':
+        if not user.is_authenticated:
+            return DocumentApproval.objects.none()
+        if getattr(user, 'role', None) == 'superadmin':
             return DocumentApproval.objects.all()
-        if user.branch:
+        if getattr(user, 'branch', None):
             return DocumentApproval.objects.filter(student__branch=user.branch)
         return DocumentApproval.objects.none()
 
@@ -75,7 +80,7 @@ class DocumentApprovalViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(docs, many=True)
         return Response(serializer.data)
 
-    @action(detail=['post'], methods=['post'])
+    @action(detail=True, methods=['post'])
     def approve(self, request, pk=None):
         doc = self.get_object()
         doc.status = 'approved'
@@ -84,7 +89,7 @@ class DocumentApprovalViewSet(viewsets.ModelViewSet):
         doc.save()
         return Response({'status': 'Document approved'})
 
-    @action(detail=['post'], methods=['post'])
+    @action(detail=True, methods=['post'])
     def reject(self, request, pk=None):
         doc = self.get_object()
         doc.status = 'rejected'
@@ -94,14 +99,16 @@ class DocumentApprovalViewSet(viewsets.ModelViewSet):
 
 
 class AttendanceManagementViewSet(viewsets.ReadOnlyModelViewSet):
-    serializer_class = AttendanceSerializer  # <- tuzatildi
+    serializer_class = AttendanceSerializer
     permission_classes = [IsAdmin]
 
     def get_queryset(self):
         user = self.request.user
-        if user.role == 'superadmin':
+        if not user.is_authenticated:
+            return Attendance.objects.none()
+        if getattr(user, 'role', None) == 'superadmin':
             return Attendance.objects.all()
-        if user.branch:
+        if getattr(user, 'branch', None):
             return Attendance.objects.filter(lesson__branch=user.branch)
         return Attendance.objects.none()
 
@@ -128,12 +135,12 @@ class AttendanceManagementViewSet(viewsets.ReadOnlyModelViewSet):
     @action(detail=False, methods=['get'])
     def student_attendance(self, request):
         student_id = request.query_params.get('student')
-        days = request.query_params.get('days', 30)
+        days = int(request.query_params.get('days', 30))
 
         if not student_id:
             return Response({'error': 'student parameter required'}, status=status.HTTP_400_BAD_REQUEST)
 
-        start_date = datetime.today().date() - timedelta(days=int(days))
+        start_date = datetime.today().date() - timedelta(days=days)
         attendance = self.get_queryset().filter(
             student__id=student_id,
             lesson__start_time__date__gte=start_date
@@ -147,8 +154,8 @@ class AttendanceManagementViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=False, methods=['get'])
     def teacher_lateness(self, request):
-        days = request.query_params.get('days', 30)
-        start_date = datetime.today().date() - timedelta(days=int(days))
+        days = int(request.query_params.get('days', 30))
+        start_date = datetime.today().date() - timedelta(days=days)
 
         late_teachers = Lesson.objects.filter(
             start_time__date__gte=start_date
@@ -168,9 +175,11 @@ class LessonMaterialViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.role == 'superadmin':
+        if not user.is_authenticated:
+            return LessonMaterial.objects.none()
+        if getattr(user, 'role', None) == 'superadmin':
             return LessonMaterial.objects.all()
-        if user.branch:
+        if getattr(user, 'branch', None):
             return LessonMaterial.objects.filter(lesson__branch=user.branch)
         return LessonMaterial.objects.none()
 
@@ -187,9 +196,11 @@ class ExamAnswerViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.role == 'superadmin':
+        if not user.is_authenticated:
+            return ExamAnswer.objects.none()
+        if getattr(user, 'role', None) == 'superadmin':
             return ExamAnswer.objects.all()
-        if user.branch:
+        if getattr(user, 'branch', None):
             return ExamAnswer.objects.filter(exam__group__branch=user.branch)
         return ExamAnswer.objects.none()
 
@@ -205,12 +216,12 @@ class AttendanceCorrectionViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.role == 'superadmin':
+        if not user.is_authenticated:
+            return AttendanceCorrection.objects.none()
+        if getattr(user, 'role', None) == 'superadmin':
             return AttendanceCorrection.objects.all()
-        if user.branch:
-            return AttendanceCorrection.objects.filter(
-                original_attendance__lesson__branch=user.branch
-            )
+        if getattr(user, 'branch', None):
+            return AttendanceCorrection.objects.filter(original_attendance__lesson__branch=user.branch)
         return AttendanceCorrection.objects.none()
 
     def perform_create(self, serializer):

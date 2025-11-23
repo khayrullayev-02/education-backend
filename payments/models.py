@@ -1,5 +1,5 @@
 from django.db import models
-from core.models import User, Student
+from core.models import CustomUser, Student
 
 class PaymentMethod(models.Model):
     PAYMENT_TYPES = [
@@ -43,3 +43,29 @@ class Transaction(models.Model):
 
     def __str__(self):
         return f"Transaction {self.reference_id} - {self.amount}"
+
+
+class PaymentInitiation(models.Model):
+    GATEWAY_CHOICES = [
+        ('stripe', 'Stripe'),
+        ('paypal', 'PayPal'),
+        ('click', 'Click'),
+        ('payme', 'Payme'),
+    ]
+    
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='payment_initiations')
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    description = models.CharField(max_length=255)
+    payment_gateway = models.CharField(max_length=50, choices=GATEWAY_CHOICES)
+    transaction = models.ForeignKey(Transaction, on_delete=models.CASCADE, null=True, blank=True)
+    callback_url = models.URLField()
+    status = models.CharField(max_length=20, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        app_label = 'payments'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"PaymentInit {self.id} - {self.student.full_name}"

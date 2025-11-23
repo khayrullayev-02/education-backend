@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import PaymentMethod, Transaction
+from .models import PaymentMethod, Transaction, PaymentInitiation
 
 class PaymentMethodSerializer(serializers.ModelSerializer):
     class Meta:
@@ -13,3 +13,11 @@ class TransactionSerializer(serializers.ModelSerializer):
         fields = ['id', 'student', 'amount', 'status', 'payment_method', 
                   'reference_id', 'created_at', 'completed_at']
         read_only_fields = ['created_at', 'completed_at']
+
+
+class PaymentInitiationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PaymentInitiation
+        fields = ['id', 'student', 'amount', 'description', 'payment_gateway', 
+                  'transaction', 'callback_url', 'status', 'created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at', 'transaction']

@@ -3,18 +3,21 @@ from core.models import CustomUser, Organization, Branch
 from django.contrib.auth import authenticate
 
 class OrganizationSerializer(serializers.ModelSerializer):
+    """Serializer for Organization management"""
     class Meta:
         model = Organization
         fields = ['id', 'name', 'address', 'phone', 'email', 'logo', 'status', 'tariff', 'created_at']
 
 class BranchSerializer(serializers.ModelSerializer):
+    """Serializer for Branch management"""
     class Meta:
         model = Branch
         fields = ['id', 'organization', 'name', 'address', 'phone', 'status', 'created_at']
 
 class CustomUserSerializer(serializers.ModelSerializer):
-    organization = OrganizationSerializer(read_only=True)
-    branch = BranchSerializer(read_only=True)
+    """Serializer for User with related organization and branch"""
+    organization = OrganizationSerializer(read_only=True, help_text="Organization details")
+    branch = BranchSerializer(read_only=True, help_text="Branch details")
     
     class Meta:
         model = CustomUser
@@ -24,8 +27,9 @@ class CustomUserSerializer(serializers.ModelSerializer):
         read_only_fields = ['created_at', 'is_blocked']
 
 class UserCreateSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, min_length=8)
-    password_confirm = serializers.CharField(write_only=True)
+    """Serializer for user registration"""
+    password = serializers.CharField(write_only=True, min_length=8, help_text="Password (minimum 8 characters)")
+    password_confirm = serializers.CharField(write_only=True, help_text="Confirm password")
     
     class Meta:
         model = CustomUser
@@ -42,8 +46,9 @@ class UserCreateSerializer(serializers.ModelSerializer):
         return user
 
 class LoginSerializer(serializers.Serializer):
-    username = serializers.CharField()
-    password = serializers.CharField(write_only=True)
+    """Serializer for user login"""
+    username = serializers.CharField(help_text="Username or email")
+    password = serializers.CharField(write_only=True, help_text="User password")
     
     def validate(self, attrs):
         user = authenticate(username=attrs['username'], password=attrs['password'])
@@ -57,9 +62,10 @@ class LoginSerializer(serializers.Serializer):
         return attrs
 
 class ChangePasswordSerializer(serializers.Serializer):
-    old_password = serializers.CharField(write_only=True)
-    new_password = serializers.CharField(write_only=True, min_length=8)
-    new_password_confirm = serializers.CharField(write_only=True)
+    """Serializer for changing user password"""
+    old_password = serializers.CharField(write_only=True, help_text="Current password")
+    new_password = serializers.CharField(write_only=True, min_length=8, help_text="New password (minimum 8 characters)")
+    new_password_confirm = serializers.CharField(write_only=True, help_text="Confirm new password")
     
     def validate(self, attrs):
         if attrs['new_password'] != attrs['new_password_confirm']:

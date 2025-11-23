@@ -14,6 +14,11 @@ import json
 
 class DirectorDashboardViewSet(viewsets.ViewSet):
     permission_classes = [IsDirector]
+
+    # ⚡ Swagger xatosini tuzatish uchun list metodini qo'shamiz
+    def list(self, request):
+        """Swagger va DRF uchun default endpoint"""
+        return self.overview(request)
     
     @action(detail=False, methods=['get'])
     def overview(self, request):

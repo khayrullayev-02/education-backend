@@ -17,12 +17,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
+
+    # Third-party
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
     'drf_yasg',
-    
+
+    # Local apps
     'core',
     'auth_system',
     'teacher_dashboard',
@@ -98,6 +100,9 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+AUTH_USER_MODEL = 'core.CustomUser'
+
+# DRF settings
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -113,6 +118,7 @@ REST_FRAMEWORK = {
     ],
 }
 
+# JWT
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=24),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
@@ -120,29 +126,29 @@ SIMPLE_JWT = {
     'SIGNING_KEY': SECRET_KEY,
 }
 
+# CORS
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
 ]
 
-SWAGGER_SETTINGS = {
-    'DEFAULT_AUTO_SCHEMA_CLASS': 'drf_yasg.openapi.AutoSchema',
-    'SECURITY_DEFINITIONS': {
-        'Bearer': {
-            'type': 'apiKey',
-            'name': 'Authorization',
-            'in': 'header'
-        }
-    },
+# Swagger (SPECTACULAR)
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Education Management System API',
+    'DESCRIPTION': 'Complete multi-role modern education management backend with JWT auth.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'SECURITY': [{'Bearer': []}],
 }
 
+# Logging
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-        },
+        'console': {'class': 'logging.StreamHandler'},
     },
     'root': {
         'handlers': ['console'],
