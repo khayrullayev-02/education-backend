@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from core.models import CustomUser, Organization, Branch
 from django.contrib.auth import authenticate
+from django.contrib.auth.models import Group
 
 class OrganizationSerializer(serializers.ModelSerializer):
     """Serializer for Organization management"""
@@ -18,13 +19,30 @@ class CustomUserSerializer(serializers.ModelSerializer):
     """Serializer for User with related organization and branch"""
     organization = OrganizationSerializer(read_only=True, help_text="Organization details")
     branch = BranchSerializer(read_only=True, help_text="Branch details")
-    
+    groups = serializers.PrimaryKeyRelatedField(
+        queryset=Group.objects.all(), many=True, required=False, help_text="Groups assigned to the user"
+    )
+
     class Meta:
         model = CustomUser
         fields = ['id', 'username', 'email', 'first_name', 'last_name', 'role', 
                   'organization', 'branch', 'phone', 'date_of_birth', 'profile_image',
-                  'is_blocked', 'two_factor_enabled', 'created_at']
+                  'is_blocked', 'two_factor_enabled', 'created_at', 'groups']
         read_only_fields = ['created_at', 'is_blocked']
+
+    def create(self, validated_data):
+        groups = validated_data.pop('groups', [])
+        user = super().create(validated_data)
+        if groups:
+            user.groups.set(groups)
+        return user
+
+    def update(self, instance, validated_data):
+        groups = validated_data.pop('groups', None)
+        instance = super().update(instance, validated_data)
+        if groups is not None:
+            instance.groups.set(groups)
+        return instance
 
 class UserCreateSerializer(serializers.ModelSerializer):
     """Serializer for user registration"""

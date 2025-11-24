@@ -37,6 +37,8 @@ INSTALLED_APPS = [
     'statistics_app',
     'notifications',
     'exams',
+    'loyalty',
+    'crm',
 ]
 
 # Middleware

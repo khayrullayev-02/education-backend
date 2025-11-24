@@ -1,7 +1,7 @@
-from rest_framework import viewsets, status, filters, mixins
+from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import AllowAny
 from django.db.models import Count, Avg, Q
 from datetime import datetime
 from core.models import Group, Attendance, Lesson, Student
@@ -9,14 +9,12 @@ from .models import Homework, HomeworkSubmission, TeacherPortfolio
 from .serializers import (
     HomeworkSerializer, HomeworkSubmissionSerializer, TeacherPortfolioSerializer
 )
-from auth_system.permissions import IsTeacher
 from finance.models import Wallet
 
 # -----------------------
 # Teacher Dashboard
 # -----------------------
-class TeacherDashboardViewSet(viewsets.GenericViewSet):  # GenericViewSet ishlatiladi
-    # permission_classes = [IsAuthenticated]
+class TeacherDashboardViewSet(viewsets.GenericViewSet):
     permission_classes = [AllowAny]
 
     # Dummy list action DRF Spectacular uchun
@@ -25,18 +23,18 @@ class TeacherDashboardViewSet(viewsets.GenericViewSet):  # GenericViewSet ishlat
 
     @action(detail=False, methods=['get'])
     def overview(self, request):
-        if request.user.role != 'teacher':
+        user = request.user
+        if not user.is_authenticated or getattr(user, 'role', None) != 'teacher':
             return Response({'error': 'Only teachers can access this'}, status=status.HTTP_403_FORBIDDEN)
 
         try:
-            teacher = request.user.teacher
+            teacher = user.teacher
             groups = Group.objects.filter(teacher=teacher)
-
             total_students = sum([group.students.count() for group in groups])
 
             stats = {
                 'teacher_id': teacher.id,
-                'name': request.user.get_full_name(),
+                'name': user.get_full_name(),
                 'groups': groups.count(),
                 'total_students': total_students,
                 'pending_homework': Homework.objects.filter(
@@ -54,10 +52,11 @@ class TeacherDashboardViewSet(viewsets.GenericViewSet):  # GenericViewSet ishlat
 
     @action(detail=False, methods=['get'])
     def my_groups(self, request):
-        if request.user.role != 'teacher':
+        user = request.user
+        if not user.is_authenticated or getattr(user, 'role', None) != 'teacher':
             return Response({'error': 'Only teachers can access this'}, status=status.HTTP_403_FORBIDDEN)
 
-        teacher = request.user.teacher
+        teacher = user.teacher
         groups = Group.objects.filter(teacher=teacher)
 
         group_data = []
@@ -74,7 +73,8 @@ class TeacherDashboardViewSet(viewsets.GenericViewSet):  # GenericViewSet ishlat
 
     @action(detail=False, methods=['get'])
     def student_attendance(self, request):
-        if request.user.role != 'teacher':
+        user = request.user
+        if not user.is_authenticated or getattr(user, 'role', None) != 'teacher':
             return Response({'error': 'Only teachers can access this'}, status=status.HTTP_403_FORBIDDEN)
 
         group_id = request.query_params.get('group')
@@ -92,7 +92,6 @@ class TeacherDashboardViewSet(viewsets.GenericViewSet):  # GenericViewSet ishlat
                     lesson__group=group,
                     status='present'
                 ).count()
-
                 total = Attendance.objects.filter(
                     student=student,
                     lesson__group=group
@@ -112,11 +111,12 @@ class TeacherDashboardViewSet(viewsets.GenericViewSet):  # GenericViewSet ishlat
 
     @action(detail=False, methods=['get'])
     def wallet_info(self, request):
-        if request.user.role != 'teacher':
+        user = request.user
+        if not user.is_authenticated or getattr(user, 'role', None) != 'teacher':
             return Response({'error': 'Only teachers can access this'}, status=status.HTTP_403_FORBIDDEN)
 
         try:
-            teacher = request.user.teacher
+            teacher = user.teacher
             wallet = teacher.wallet
             wallet.update_balance()
 
@@ -131,12 +131,12 @@ class TeacherDashboardViewSet(viewsets.GenericViewSet):  # GenericViewSet ishlat
 
     @action(detail=False, methods=['get'])
     def upcoming_lessons(self, request):
-        if request.user.role != 'teacher':
+        user = request.user
+        if not user.is_authenticated or getattr(user, 'role', None) != 'teacher':
             return Response({'error': 'Only teachers can access this'}, status=status.HTTP_403_FORBIDDEN)
 
-        teacher = request.user.teacher
+        teacher = user.teacher
         now = datetime.now()
-
         lessons = Lesson.objects.filter(
             teacher=teacher,
             start_time__gte=now,
@@ -162,16 +162,16 @@ class TeacherDashboardViewSet(viewsets.GenericViewSet):  # GenericViewSet ishlat
 # -----------------------
 class HomeworkViewSet(viewsets.ModelViewSet):
     serializer_class = HomeworkSerializer
-    # permission_classes = [IsAuthenticated]
     permission_classes = [AllowAny]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['title', 'group__name']
     ordering_fields = ['due_date', 'created_date']
 
     def get_queryset(self):
-        if self.request.user.role != 'teacher':
+        user = self.request.user
+        if not user.is_authenticated or getattr(user, 'role', None) != 'teacher':
             return Homework.objects.none()
-        teacher = self.request.user.teacher
+        teacher = user.teacher
         return Homework.objects.filter(teacher=teacher)
 
     def perform_create(self, serializer):
@@ -183,15 +183,15 @@ class HomeworkViewSet(viewsets.ModelViewSet):
 # -----------------------
 class HomeworkSubmissionViewSet(viewsets.ModelViewSet):
     serializer_class = HomeworkSubmissionSerializer
-    # permission_classes = [IsAuthenticated]
     permission_classes = [AllowAny]
     filter_backends = [filters.OrderingFilter]
     ordering_fields = ['submitted_date']
 
     def get_queryset(self):
-        if self.request.user.role != 'teacher':
+        user = self.request.user
+        if not user.is_authenticated or getattr(user, 'role', None) != 'teacher':
             return HomeworkSubmission.objects.none()
-        teacher = self.request.user.teacher
+        teacher = user.teacher
         return HomeworkSubmission.objects.filter(homework__teacher=teacher)
 
     @action(detail=True, methods=['post'])
@@ -211,13 +211,13 @@ class HomeworkSubmissionViewSet(viewsets.ModelViewSet):
 # -----------------------
 class TeacherPortfolioViewSet(viewsets.ModelViewSet):
     serializer_class = TeacherPortfolioSerializer
-    # permission_classes = [IsAuthenticated]
     permission_classes = [AllowAny]
 
     def get_queryset(self):
-        if self.request.user.role != 'teacher':
+        user = self.request.user
+        if not user.is_authenticated or getattr(user, 'role', None) != 'teacher':
             return TeacherPortfolio.objects.none()
-        teacher = self.request.user.teacher
+        teacher = user.teacher
         return TeacherPortfolio.objects.filter(teacher=teacher)
 
     def perform_create(self, serializer):

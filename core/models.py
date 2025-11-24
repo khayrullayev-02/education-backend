@@ -152,16 +152,21 @@ class Teacher(models.Model):
 class Group(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE, related_name='groups')
+    # Link Group to Course (optional)
+    course = models.ForeignKey('Course', on_delete=models.SET_NULL, null=True, blank=True, related_name='groups')
     name = models.CharField(max_length=255)
-    subject = models.CharField(max_length=255)
+    # now link to Subject model
+    subject = models.ForeignKey('Subject', on_delete=models.SET_NULL, null=True, blank=True, related_name='groups')
     teacher = models.ForeignKey(Teacher, on_delete=models.SET_NULL, null=True, related_name='groups')
+    # optional Room assignment (nullable)
+    room = models.ForeignKey('Room', on_delete=models.SET_NULL, null=True, blank=True, related_name='groups')
     level = models.CharField(max_length=50, blank=True)
     max_students = models.IntegerField(default=20)
     students = models.ManyToManyField(Student, related_name='groups', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.name} - {self.subject}"
+        return f"{self.name} - {self.subject.name if self.subject else ''}"
 
 
 class Lesson(models.Model):
@@ -189,6 +194,92 @@ class Lesson(models.Model):
 # ========================
 # Attendance va Payment
 # ========================
+
+
+class Course(models.Model):
+    STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('inactive', 'Inactive'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, null=True, blank=True, related_name='courses')
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    duration_hours = models.IntegerField(default=0)
+    price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
+    created_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_courses')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.organization.name if self.organization else 'No Org'})"
+
+
+# ========================
+# Subject
+# ========================
+class Subject(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, null=True, blank=True, related_name='subjects')
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = (('organization', 'name'),)
+
+    def __str__(self):
+        return self.name
+
+
+# ========================
+# Room and RoomSchedule
+# ========================
+class Room(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, null=True, blank=True, related_name='rooms')
+    branch = models.ForeignKey(Branch, on_delete=models.CASCADE, null=True, blank=True, related_name='rooms')
+    name = models.CharField(max_length=255)
+    capacity = models.IntegerField(default=0)
+    location = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = (('branch', 'name'),)
+
+    def __str__(self):
+        return f"{self.name} ({self.branch.name if self.branch else 'No Branch'})"
+
+
+class RoomSchedule(models.Model):
+    WEEK_DAYS = [
+        ('mon', 'Monday'), ('tue', 'Tuesday'), ('wed', 'Wednesday'),
+        ('thu', 'Thursday'), ('fri', 'Friday'), ('sat', 'Saturday'), ('sun', 'Sunday')
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name='schedules')
+    group = models.ForeignKey('Group', on_delete=models.CASCADE, related_name='room_schedules')
+    days = models.JSONField(default=list)  # Default to an empty list
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+    note = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['room', 'start_time', 'end_time'],
+                condition=models.Q(days__overlap=True),
+                name='unique_room_schedule'
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.room.name} - {self.group.name} ({', '.join(self.days)}) {self.start_time}-{self.end_time}"
+
 class Attendance(models.Model):
     STATUS_CHOICES = [
         ('present', 'Present'),
@@ -294,3 +385,6 @@ class SystemLog(models.Model):
 
     def __str__(self):
         return f"{self.action} - {self.created_at}"
+
+
+

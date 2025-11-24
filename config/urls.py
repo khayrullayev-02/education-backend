@@ -11,7 +11,7 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, Sp
 # Auth
 from auth_system.views import (
     LoginView, RegisterView, UserProfileView, ChangePasswordView,
-    OrganizationViewSet, UserViewSet
+    OrganizationViewSet, UserViewSet, BranchViewSet
 )
 
 # Finance
@@ -58,12 +58,21 @@ from notifications.views import (
     NotificationLogViewSet, NotificationTemplateViewSet
 )
 
+# Loyalty
+from loyalty.views import LoyaltyBranchViewSet, LoyaltyPointViewSet
+
+# CRM
+from crm.views import GroupViewSet, CourseViewSet
+from crm.views import SubjectViewSet
+from crm.views import RoomViewSet, RoomScheduleViewSet
+
 # Router
 router = DefaultRouter()
 
 # Auth
 router.register(r'organizations', OrganizationViewSet, basename='organization')
 router.register(r'users', UserViewSet, basename='user')
+router.register(r'branches', BranchViewSet, basename='branch')
 
 # Finance
 router.register(r'finance/reports', FinanceReportViewSet, basename='finance-report')
@@ -101,6 +110,17 @@ router.register(r'exams/uploads', ExamUploadViewSet, basename='exam-upload')
 
 # Statistics
 router.register(r'statistics', StatisticsViewSet, basename='statistics')
+
+# Loyalty
+router.register(r'loyalty/branches', LoyaltyBranchViewSet, basename='loyalty-branch')
+router.register(r'loyalty/points', LoyaltyPointViewSet, basename='loyalty-point')
+
+# CRM
+router.register(r'groups', GroupViewSet, basename='group')
+router.register(r'courses', CourseViewSet, basename='course')
+router.register(r'subjects', SubjectViewSet, basename='subject')
+router.register(r'rooms', RoomViewSet, basename='room')
+router.register(r'room-schedules', RoomScheduleViewSet, basename='room-schedule')
 
 # Superadmin Dashboard
 router.register(r'superadmin/organizations', SuperadminOrganizationViewSet, basename='superadmin-organization')
